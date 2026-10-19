@@ -1,0 +1,1762 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f7f4">
+<title>GOROD.RU Studio — градостроительный анализ</title>
+
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://nominatim.openstreetmap.org" crossorigin>
+
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="https://unpkg.com/@mapbox/mapbox-gl-draw@1.5.0/dist/mapbox-gl-draw.css">
+
+<style>
+:root {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  color: #202722;
+  background: #f5f6f2;
+  font-synthesis: none;
+  --green: #294638;
+  --line: #e1e5de;
+  --muted: #69736b;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select, textarea { font: inherit; }
+
+button, select {
+  border: 1px solid #d7ddd5;
+  background: #fff;
+  color: #202722;
+  border-radius: 9px;
+  padding: 9px 11px;
+  cursor: pointer;
+}
+
+button:hover { background: #f0f3ee; }
+button:disabled { opacity: .55; cursor: wait; }
+
+.primary {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+.danger { color: #a13c32; }
+
+.app-header {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 10;
+}
+
+.brand {
+  font-weight: 850;
+  letter-spacing: .08em;
+  font-size: 15px;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.top-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.top-actions button {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr);
+  height: calc(100dvh - 65px);
+  min-height: 520px;
+}
+
+.sidebar {
+  background: #fff;
+  border-right: 1px solid var(--line);
+  overflow: auto;
+  padding: 13px;
+}
+
+.section {
+  border-bottom: 1px solid #edf0eb;
+  padding: 0 0 14px;
+  margin: 0 0 14px;
+}
+
+.section h2 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.field {
+  display: flex;
+  gap: 6px;
+}
+
+.field input,
+.field select,
+input[type=text],
+input[type=number],
+textarea {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid #d7ddd5;
+  border-radius: 9px;
+  padding: 9px;
+  background: white;
+}
+
+.field button { flex-shrink: 0; }
+
+.small {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 8px 0 0;
+}
+
+.cities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.cities button {
+  font-size: 11px;
+  padding: 7px 8px;
+}
+
+.checklist {
+  display: grid;
+  gap: 9px;
+  font-size: 13px;
+}
+
+.checklist label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.checklist input { accent-color: var(--green); }
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.btn-grid button { font-size: 12px; }
+
+.color-row {
+  display: grid;
+  grid-template-columns: 1fr 54px;
+  gap: 8px;
+  align-items: center;
+  margin: 9px 0;
+}
+
+.color-row input[type=color] {
+  width: 54px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 2px;
+}
+
+.range-row {
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.range-row input { width: 100%; }
+
+.result {
+  background: #f5f7f3;
+  border: 1px solid #e7ebe4;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.map-wrap {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: #e9ede7;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+.status {
+  position: absolute;
+  z-index: 4;
+  bottom: 12px;
+  left: 12px;
+  max-
+
+
+width: min(560px, calc(100% - 24px));
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 12px #0001;
+  font-size: 12px;
+  color: #59625b;
+}
+
+.status.error { color: #8c2b21; }
+
+.loading {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #edf0eb;
+  color: #59625b;
+  font-size: 13px;
+  transition: opacity .2s;
+}
+
+.loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ccd5cb;
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin-right: 9px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.feature-list {
+  max-height: 180px;
+  overflow: auto;
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.feature-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px;
+  font-size: 11px;
+  text-align: left;
+  background: #fff;
+}
+
+.feature-item:hover { background: #f2f5f0; }
+
+.ai-box {
+  display: grid;
+  gap: 7px;
+}
+
+.ai-box textarea {
+  resize: vertical;
+  min-height: 76px;
+}
+
+.pill {
+  display: inline-block;
+  border-radius: 99px;
+  background: #e8eee8;
+  padding: 3px 7px;
+  font-size: 10px;
+  color: #34513e;
+}
+
+.maplibregl-ctrl-group {
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+
+.maplibregl-ctrl-attrib { font-size: 10px; }
+
+max-width: 850px {
+  .app-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 10px 12px;
+  }
+
+  .top-actions { width: 100%; }
+
+  main {
+    grid-template-columns: 1fr;
+    height: calc(100dvh - 110px);
+  }
+
+  .sidebar {
+    position: absolute;
+    z-index: 8;
+    top: 110px;
+    left: 0;
+    width: min(320px, 88vw);
+    max-height: calc(100dvh - 110px);
+    display: none;
+    box-shadow: 5px 0 18px #0001;
+  }
+
+  .sidebar.open { display: block; }
+  .mobile-only { display: inline-flex !important; }
+}
+
+.mobile-only { display: none; }
+</style>
+</head>
+
+<body>
+
+<header class="app-header">
+  <div>
+    <div class="brand">
+      GOROD.RU
+      <span style="font-weight:500;color:#7a817a">STUDIO</span>
+    </div>
+    <div class="subtitle">
+      Карта · анализ участка · тематические маски · ИИ-помощник
+    </div>
+  </div>
+
+  <div class="top-actions">
+    <button id="togglePanel" class="mobile-only">☰ Панель</button>
+    <button id="newProject">＋ Новый</button>
+    <button id="saveProject" class="primary">Сохранить</button>
+    <button id="exportPng">PNG</button>
+    <button id="exportGeo">GeoJSON</button>
+    <button id="exportProject">Проект JSON</button>
+    <button id="importProject">Открыть</button>
+    <input id="fileInput" type="file" accept="application/json,.json" hidden>
+  </div>
+</header>
+
+<main>
+<aside class="sidebar" id="sidebar">
+
+  <section class="section">
+    <h2>Поиск адресов и объектов</h2>
+    <div class="field">
+      <input id="searchInput" placeholder="Улица, дом, парк, сад, лес…">
+      <button id="searchBtn">Найти</button>
+    </div>
+
+    <div class="two" style="margin-top:7px">
+      <button id="parksBtn">Парки и леса в районе</button>
+      <button id="clearPlaces">Убрать метки</button>
+    </div>
+
+    <p class="small">
+      Поиск адресов — Nominatim. Список парков, садов и лесов вокруг карты —
+      OpenStreetMap через Overpass. Полнота названий зависит от картографических данных.
+    </p>
+
+    <div id="placesList" class="feature-list"></div>
+  </section>
+
+  <section class="section">
+    <h2>Быстрый переход</h2>
+    <div class="cities" id="cities"></div>
+  </section>
+
+  <section class="section">
+    <h2>Слои карты</h2>
+    <div class="checklist">
+      <label><input type="checkbox" id="roads" checked> Дороги и транспорт</label>
+      <label><input type="checkbox" id="buildings" checked> Здания</label>
+      <label><input type="checkbox" id="green" checked> Озеленение / землепользование</label>
+      <label><input type="checkbox" id="water" checked> Водоёмы и реки</label>
+      <label><input type="c
+
+
+heckbox" id="labels" checked> Подписи</label>
+      <label><input type="checkbox" id="threeD"> 3D-здания (тяжёлый режим)</label>
+    </div>
+    <p class="small">
+      Слои управляют теми объектами, которые предоставляет текущий стиль карты.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Редактирование участка</h2>
+
+    <div class="btn-grid">
+      <button id="drawPolygon">＋ Нарисовать участок</button>
+      <button id="drawLine">／ Нарисовать линию</button>
+      <button id="drawPoint">● Поставить точку</button>
+      <button id="editMode">✎ Редактировать</button>
+      <button id="deleteSelected" class="danger">Удалить выбранное</button>
+      <button id="finishDraw">Завершить рисунок</button>
+    </div>
+
+    <div class="color-row">
+      <label for="maskColor" style="font-size:12px">Цвет маски</label>
+      <input type="color" id="maskColor" value="#e5a64b">
+    </div>
+
+    <div class="range-row">
+      <label for="maskOpacity">Прозрачность заливки</label>
+      <span id="opacityValue">35%</span>
+      <input id="maskOpacity" type="range" min="5" max="90" value="35"
+             style="grid-column:1/-1">
+    </div>
+
+    <div class="field" style="margin-top:8px">
+      <input id="maskName" placeholder="Название маски / зоны">
+      <button id="applyMask">Применить</button>
+    </div>
+
+    <p class="small">
+      Рисуйте полигон участка, линию улицы или точку интереса.
+      В режиме редактирования можно перемещать вершины.
+      Маски и рисунки сохраняются в GeoJSON/проекте.
+    </p>
+
+    <div id="drawStats" class="result">
+      Выберите или нарисуйте полигон, чтобы рассчитать площадь.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Градостроительный анализ</h2>
+
+    <div class="checklist">
+      <label><input type="checkbox" id="analysisBuildings" checked> Считать здания на карте</label>
+      <label><input type="checkbox" id="analysisGreen" checked> Учитывать зелёные зоны</label>
+      <label><input type="checkbox" id="analysisRoads" checked> Учитывать дороги</label>
+    </div>
+
+    <div class="btn-grid" style="margin-top:8px">
+      <button id="runAnalysis" class="primary">Анализ участка</button>
+      <button id="bufferTool">Буфер 100 м</button>
+    </div>
+
+    <div class="result" id="analysisResult">
+      Нарисуйте полигон и нажмите «Анализ участка».
+    </div>
+
+    <p class="small">
+      Это предварительный картографический анализ видимых объектов,
+      а не юридическое заключение и не полноценная ГИС-экспертиза.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>Проект</h2>
+    <input type="text" id="projectName" value="Градостроительный анализ" maxlength="80">
+    <p class="small">
+      Камера, маски, рисунки и настройки слоёв сохраняются в проекте JSON.
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>ИИ-помощник <span class="pill">бета</span></h2>
+
+    <div class="ai-box">
+      <textarea id="aiQuestion"
+        placeholder="Например: предложи анализ доступности парка и связности пешеходных маршрутов…"></textarea>
+      <button id="askAI" class="primary">Подготовить запрос для ИИ</button>
+      <button id="copyAIPrompt">Скопировать запрос</button>
+    </div>
+
+    <p class="small">
+      Кнопка подготовит контекст проекта и откроет ChatGPT для отправки запроса.
+      Для встроенного ИИ-чата прямо в приложении нужен сервер и безопасное
+      подключение к API — ключ нельзя размещать в HTML.
+    </p>
+  </section>
+
+</aside>
+
+<section class="map-wrap">
+  <div id="map"></div>
+  <div class="loading" id="loading">
+    <span class="spinner"></span>
+    <span id="loadingText">Загружаем карту…</span>
+  </div>
+  <div class="status" id="status" role="status">Подключение к карте…</div>
+</section>
+</main>
+
+<script src="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@mapbox/mapbox-gl-draw@1.5.0/dist/mapbox-gl-draw.js"></script>
+<script src="https://unpkg.com/@turf/turf@7.2.0/turf.min.js"></script>
+
+<script>
+(() => {
+'use strict';
+
+co
+
+
+nst $ = id => document.getElementById(id);
+
+const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+
+const CITIES = {
+  'Новосибирск': [82.9204, 55.0302],
+  'Москва': [37.6173, 55.7558],
+  'Санкт-Петербург': [30.3351, 59.9343],
+  'Екатеринбург': [60.5975, 56.8389],
+  'Казань': [49.1064, 55.7961],
+  'Красноярск': [92.8526, 56.0153],
+  'Омск': [73.3686, 54.9885],
+  'Тюмень': [65.5343, 57.153],
+  'Талдыкорган': [78.3739, 45.0156],
+  'Самара': [50.1002, 53.1959],
+  'Пермь': [56.2294, 58.0105],
+  'Уфа': [55.9587, 54.7388]
+};
+
+let map = null;
+let mapReady = false;
+let draw = null;
+let activeCity = 'Новосибирск';
+let searchController = null;
+let placesController = null;
+let placeMarkers = [];
+let analysisBuffer = null;
+
+const setStatus = (s, error = false) => {
+  $('status').textContent = s;
+  $('status').classList.toggle('error', error);
+};
+
+const slug = s =>
+  String(s || 'gorodru')
+    .toLowerCase()
+    .replace(/[^a-zа-яё0-9_-]+/gi, '-')
+    .replace(/^-+|-+$/g, '') || 'gorodru';
+
+const safeName = s =>
+  String(s || 'Градостроительный анализ').slice(0, 80);
+
+const hideLoading = () => $('loading').classList.add('hidden');
+
+const showLoading = s => {
+  $('loadingText').textContent = s;
+  $('loading').classList.remove('hidden');
+};
+
+Object.keys(CITIES).forEach(name => {
+  const b = document.createElement('button');
+  b.textContent = name;
+  b.addEventListener('click', () => goCity(name));
+  $('cities').appendChild(b);
+});
+
+function createMap() {
+  if (!window.maplibregl) {
+    hideLoading();
+    setStatus('MapLibre не загрузился. Проверьте доступ к unpkg.com.', true);
+    return;
+  }
+
+  try {
+    map = new maplibregl.Map({
+      container: 'map',
+      style: STYLE_URL,
+      center: CITIES[activeCity],
+      zoom: 12,
+      minZoom: 2,
+      maxZoom: 20,
+      fadeDuration: 0,
+      refreshExpiredTiles: false,
+      cooperativeGestures: true,
+      preserveDrawingBuffer: true,
+      maxTileCacheSize: 80,
+      trackResize: true
+    });
+
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: true }),
+      'top-right'
+    );
+
+    map.addControl(
+      new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }),
+      'bottom-right'
+    );
+
+    const timeout = setTimeout(() => {
+      if (!mapReady) {
+        hideLoading();
+        setStatus(
+          'Карта не загрузилась за 18 секунд. Проверьте сеть или сервер тайлов.',
+          true
+        );
+      }
+    }, 18000);
+
+    map.on('load', () => {
+      clearTimeout(timeout);
+      mapReady = true;
+      hideLoading();
+      setupDraw();
+      applyLayerVisibility();
+      addMaskLayers();
+      setStatus('Карта загружена · ' + activeCity);
+    });
+
+    map.on('error', e => {
+      const m = e?.error?.message || 'ошибка сетевого запроса';
+      setStatus('Ошибка карты: ' + m, true);
+    });
+
+  } catch (e) {
+    hideLoading();
+    setStatus('Ошибка запуска: ' + e.message, true);
+  }
+}
+
+function category(l) {
+  const id = (l.id || '').toLowerCase();
+  const src = (l['source-layer'] || '').toLowerCase();
+  const s = id + ' ' + src;
+
+  if (/label|place|housenumber|poi|road[_-]?name|water[_-]?name|settlement|name-/.test(id)) return 'labels';
+  if (/road|transportation|street|highway|bridge|tunnel|path|railway|ferry/.test(s)) return 'roads';
+  if (/water|river|lake|ocean|waterway|marine/.test(s)) return 'water';
+  if (/park|green|landcover|landuse|wood|grass|forest|garden|vegetation/.test(s)) return 'green';
+  if (/building/.test(s)) return 'buildings';
+
+  return null;
+}
+
+function applyLayerVisibility() {
+  if (!map || !map.isStyleLoaded()) return;
+
+  ['roads', 'buildings', 'green', 'water', 'labels'].forEach(c => {
+    const on = $(c).checked;
+
+    map.getStyle().layers.forEach(l => {
+      if (category(l) === c && map.getLayer(l.id)) {
+        try {
+          map.setLayoutProperty(l.id, 'visibility', on ? 'visible' : 'none');
+        } catch (_) {}
+      }
+    });
+  });
+
+  if ($('threeD').checked) {
+    add3D();
+  } else if (map.getLayer('gorod-3d')) {
+
+
+map.setLayoutProperty('gorod-3d', 'visibility', 'none');
+  }
+}
+
+['roads', 'buildings', 'green', 'water', 'labels'].forEach(id => {
+  $(id).addEventListener('change', applyLayerVisibility);
+});
+
+function add3D() {
+  if (!map || !map.isStyleLoaded()) return;
+
+  if (map.getLayer('gorod-3d')) {
+    map.setLayoutProperty('gorod-3d', 'visibility', 'visible');
+    return;
+  }
+
+  const srcs = map.getStyle().sources || {};
+  const sid = Object.keys(srcs).find(id => srcs[id].type === 'vector');
+
+  if (!sid) {
+    setStatus('Не найден векторный источник для 3D.', true);
+    $('threeD').checked = false;
+    return;
+  }
+
+  const bl = map.getStyle().layers.find(
+    l => l.source === sid && /building/i.test(l['source-layer'] || '')
+  );
+
+  if (!bl) {
+    setStatus('В этом стиле не найден слой зданий.', true);
+    $('threeD').checked = false;
+    return;
+  }
+
+  try {
+    map.addLayer({
+      id: 'gorod-3d',
+      type: 'fill-extrusion',
+      source: sid,
+      'source-layer': bl['source-layer'],
+      minzoom: 14,
+      paint: {
+        'fill-extrusion-color': '#b8c2b7',
+        'fill-extrusion-height': [
+          'coalesce', ['get', 'render_height'], ['get', 'height'], 8
+        ],
+        'fill-extrusion-base': [
+          'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0
+        ],
+        'fill-extrusion-opacity': 0.85
+      }
+    });
+
+    setStatus('3D-здания включены · приблизительные высоты');
+
+  } catch (e) {
+    $('threeD').checked = false;
+    setStatus('Не удалось включить 3D: ' + e.message, true);
+  }
+}
+
+$('threeD').addEventListener('change', () => {
+  if ($('threeD').checked) {
+    add3D();
+  } else if (map?.getLayer('gorod-3d')) {
+    map.setLayoutProperty('gorod-3d', 'visibility', 'none');
+  }
+});
+
+function goCity(n) {
+  if (!map) return;
+
+  activeCity = n;
+  showLoading('Перемещаем карту…');
+
+  map.flyTo({
+    center: CITIES[n],
+    zoom: 12,
+    duration: 400
+  });
+
+  map.once('moveend', () => {
+    hideLoading();
+    setStatus('Город: ' + n);
+  });
+}
+
+$('togglePanel').addEventListener('click', () => {
+  $('sidebar').classList.toggle('open');
+});
+
+function setupDraw() {
+  if (!window.MapboxDraw) {
+    setStatus('Инструменты рисования не загрузились. Проверьте unpkg.com.', true);
+    return;
+  }
+
+  draw = new MapboxDraw({
+    displayControlsDefault: false,
+    controls: {},
+    defaultMode: 'simple_select',
+    styles: [
+      {
+        id: 'gl-draw-polygon-fill',
+        type: 'fill',
+        filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+        paint: {
+          'fill-color': ['coalesce', ['get', 'maskColor'], '#e5a64b'],
+          'fill-outline-color': ['coalesce', ['get', 'maskColor'], '#b67b28'],
+          'fill-opacity': ['coalesce', ['get', 'maskOpacity'], 0.35]
+        }
+      },
+      {
+        id: 'gl-draw-polygon-fill-static',
+        type: 'fill',
+        filter: ['all', ['==', '$type', 'Polygon'], ['==', 'mode', 'static']],
+        paint: {
+          'fill-color': ['coalesce', ['get', 'maskColor'], '#e5a64b'],
+          'fill-outline-color': ['coalesce', ['get', 'maskColor'], '#b67b28'],
+          'fill-opacity': ['coalesce', ['get', 'maskOpacity'], 0.35]
+        }
+      },
+      {
+        id: 'gl-draw-polygon-stroke',
+        type: 'line',
+        filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': ['coalesce', ['get', 'maskColor'], '#b67b28'],
+          'line-width': 2
+        }
+      },
+      {
+        id: 'gl-draw-polygon-stroke-static',
+        type: 'line',
+        filter: ['all', ['==', '$type', 'Polygon'], ['==', 'mode', 'static']],
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': ['coalesce', ['get', 'maskColor'], '#b67b28'],
+          'line-width': 2
+        }
+      },
+      {
+        id: 'gl-draw-line',
+        type: 'line',
+        filter: ['all', ['==', '$type', 'LineString'], [
+
+
+'!=', 'mode', 'static']],
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': ['coalesce', ['get', 'maskColor'], '#e5a64b'],
+          'line-width': 3,
+          'line-opacity': ['coalesce', ['get', 'maskOpacity'], 0.8]
+        }
+      },
+      {
+        id: 'gl-draw-point',
+        type: 'circle',
+        filter: ['all', ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
+        paint: {
+          'circle-radius': 6,
+          'circle-color': ['coalesce', ['get', 'maskColor'], '#e5a64b'],
+          'circle-stroke-color': '#fff',
+          'circle-stroke-width': 2
+        }
+      },
+      {
+        id: 'gl-draw-vertex-halo',
+        type: 'circle',
+        filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
+        paint: { 'circle-radius': 7, 'circle-color': '#fff' }
+      },
+      {
+        id: 'gl-draw-vertex',
+        type: 'circle',
+        filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
+        paint: { 'circle-radius': 4, 'circle-color': '#334e3d' }
+      },
+      {
+        id: 'gl-draw-midpoint',
+        type: 'circle',
+        filter: ['all', ['==', 'meta', 'midpoint']],
+        paint: {
+          'circle-radius': 4,
+          'circle-color': '#fff',
+          'circle-stroke-color': '#334e3d',
+          'circle-stroke-width': 2
+        }
+      },
+      {
+        id: 'gl-draw-polygon-and-line-vertex-active',
+        type: 'circle',
+        filter: ['all', ['==', 'meta', 'vertex'], ['==', 'active', 'true']],
+        paint: {
+          'circle-radius': 6,
+          'circle-color': '#fff',
+          'circle-stroke-color': '#334e3d',
+          'circle-stroke-width': 2
+        }
+      }
+    ]
+  });
+
+  map.addControl(draw, 'top-left');
+  map.on('draw.create', onDrawChanged);
+  map.on('draw.update', onDrawChanged);
+  map.on('draw.delete', onDrawChanged);
+  map.on('draw.selectionchange', onDrawChanged);
+}
+
+function getAllDrawn() {
+  return draw ? draw.getAll() : { type: 'FeatureCollection', features: [] };
+}
+
+function currentSelected() {
+  if (!draw) return null;
+  const ids = draw.getSelectedIds();
+  if (!ids.length) return null;
+  return draw.get(ids[0]);
+}
+
+function startDraw(mode) {
+  if (!draw) {
+    setStatus('Инструменты ещё загружаются.', true);
+    return;
+  }
+
+  draw.changeMode(mode);
+  setStatus('Режим рисования: ' + mode + '. Нажимайте на карту, чтобы поставить вершины.');
+
+  if (window.innerWidth < 850) {
+    $('sidebar').classList.remove('open');
+  }
+}
+
+$('drawPolygon').addEventListener('click', () => startDraw('draw_polygon'));
+$('drawLine').addEventListener('click', () => startDraw('draw_line_string'));
+$('drawPoint').addEventListener('click', () => startDraw('draw_point'));
+
+$('editMode').addEventListener('click', () => {
+  if (draw) draw.changeMode('simple_select');
+  setStatus('Редактирование: выберите объект и перетаскивайте вершины.');
+});
+
+$('finishDraw').addEventListener('click', () => {
+  if (draw) draw.changeMode('simple_select');
+  setStatus('Рисование завершено.');
+});
+
+$('deleteSelected').addEventListener('click', () => {
+  if (!draw) return;
+
+  const ids = draw.getSelectedIds();
+
+  if (!ids.length) {
+    setStatus('Сначала выберите объект.', true);
+    return;
+  }
+
+  draw.delete(ids);
+  onDrawChanged();
+});
+
+function onDrawChanged() {
+  refreshStats();
+  refreshMaskStyle();
+}
+
+function refreshMaskStyle() {
+  if (!draw) return;
+
+  const ids = draw.getSelectedIds();
+  if (!ids.length) return;
+
+  const f = draw.get(ids[0]);
+  if (!f) return;
+
+  const color = $('maskColor').value;
+  const opacity = Number($('maskOpacity').value) / 100;
+
+  const props = {
+    ...(f.properties || {}),
+    maskColor: color,
+    maskOpacity: opacity,
+    name: $('maskName').value.trim() || f.properties?.name || 'Маска'
+  };
+
+  draw.setFeatureProperty(f.id, 'maskColor', props.maskColor);
+  draw.setFeatureProperty(f.id, 'maskOpacity', props.maskOpacity);
+  draw.setFeatureProperty(f.id, 'name', props.name);
+}
+
+$('maskOpacity').addEvent
+
+
+Listener('input', () => {
+  $('opacityValue').textContent = $('maskOpacity').value + '%';
+  refreshMaskStyle();
+});
+
+$('maskColor').addEventListener('input', refreshMaskStyle);
+
+$('applyMask').addEventListener('click', () => {
+  if (!draw) return;
+
+  const ids = draw.getSelectedIds();
+
+  if (!ids.length) {
+    setStatus('Выберите маску или нарисуйте объект, затем выберите его.', true);
+    return;
+  }
+
+  const id = ids[0];
+
+  draw.setFeatureProperty(id, 'maskColor', $('maskColor').value);
+  draw.setFeatureProperty(id, 'maskOpacity', Number($('maskOpacity').value) / 100);
+  draw.setFeatureProperty(id, 'name', $('maskName').value.trim() || 'Маска');
+
+  refreshStats();
+  setStatus('Стиль и название применены к выбранному объекту.');
+});
+
+function selectedPolygon() {
+  if (!draw) return null;
+
+  const fs = getAllDrawn().features;
+  const ids = draw.getSelectedIds();
+  const candidates = ids.length ? fs.filter(f => ids.includes(f.id)) : fs;
+
+  return candidates.find(f =>
+    f.geometry &&
+    (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
+  ) || null;
+}
+
+function refreshStats() {
+  const f = selectedPolygon();
+
+  if (!f) {
+    $('drawStats').textContent = 'Выберите или нарисуйте полигон, чтобы рассчитать площадь.';
+    return;
+  }
+
+  try {
+    const area = window.turf ? turf.area(f) : 0;
+    const ha = area / 10000;
+    const perimeter = window.turf
+      ? turf.length(turf.polygonToLine(f), { units: 'kilometers' })
+      : 0;
+
+    $('drawStats').innerHTML =
+      '<b>' + escapeHtml(f.properties?.name || 'Участок') + '</b>
+' +
+      'Площадь: ' + formatArea(area) + ' (' + ha.toFixed(2) + ' га)
+' +
+      'Периметр: ' + perimeter.toFixed(2) + ' км';
+
+  } catch (e) {
+    $('drawStats').textContent = 'Не удалось рассчитать геометрию.';
+  }
+}
+
+function formatArea(m2) {
+  return m2 >= 1e6
+    ? (m2 / 1e6).toFixed(3) + ' км²'
+    : Math.round(m2).toLocaleString('ru-RU') + ' м²';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '''
+  }[c]));
+}
+
+function addMaskLayers() {
+  if (!map || map.getSource('analysis-buffer')) return;
+
+  map.addSource('analysis-buffer', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] }
+  });
+
+  map.addLayer({
+    id: 'analysis-buffer-fill',
+    type: 'fill',
+    source: 'analysis-buffer',
+    paint: {
+      'fill-color': '#5d94cc',
+      'fill-opacity': 0.15
+    }
+  });
+
+  map.addLayer({
+    id: 'analysis-buffer-line',
+    type: 'line',
+    source: 'analysis-buffer',
+    paint: {
+      'line-color': '#427ab2',
+      'line-width': 2,
+      'line-dasharray': [2, 2]
+    }
+  });
+}
+
+$('bufferTool').addEventListener('click', () => {
+  const f = selectedPolygon();
+
+  if (!f) {
+    setStatus('Сначала нарисуйте или выберите полигон участка.', true);
+    return;
+  }
+
+  if (!window.turf) {
+    setStatus('Библиотека расчётов не загрузилась.', true);
+    return;
+  }
+
+  try {
+    analysisBuffer = turf.buffer(f, 100, { units: 'meters' });
+
+    if (!map.getSource('analysis-buffer')) addMaskLayers();
+
+    map.getSource('analysis-buffer').setData(analysisBuffer);
+    setStatus('Построен ориентировочный буфер 100 м вокруг участка.');
+
+  } catch (e) {
+    setStatus('Не удалось построить буфер: ' + e.message, true);
+  }
+});
+
+async function searchAddress() {
+  const q = $('searchInput').value.trim();
+  if (!q) return;
+
+  if (searchController) searchController.abort();
+
+  searchController = new AbortController();
+  $('searchBtn').disabled = true;
+  setStatus('Ищем адрес или объект…');
+
+  try {
+    const url =
+      'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&namedetails=1&limit=6&q=' +
+      encodeURIComponent(q);
+
+    const r = await fetch(url, {
+      signal: searchController.signal,
+      headers: { Accept: 'application/json' }
+    });
+
+    if (!r.ok) throw new Error('Сервис поиска ответил ' + r.status);
+
+    const arr = await r.json();
+    if (!a
+
+
+rr.length) throw new Error('Ничего не найдено');
+
+    renderSearchResults(arr);
+
+    const x = arr[0];
+
+    map.flyTo({
+      center: [+x.lon, +x.lat],
+      zoom: Math.max(15, map.getZoom()),
+      duration: 500
+    });
+
+    setStatus('Найдено: ' + (x.display_name || q));
+
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      setStatus('Поиск: ' + e.message, true);
+    }
+  } finally {
+    $('searchBtn').disabled = false;
+  }
+}
+
+function renderSearchResults(arr) {
+  const box = $('placesList');
+  box.replaceChildren();
+
+  arr.forEach(item => {
+    const b = document.createElement('button');
+    b.className = 'feature-item';
+    b.textContent = item.display_name || 'Объект';
+
+    b.addEventListener('click', () => {
+      map.flyTo({
+        center: [+item.lon, +item.lat],
+        zoom: 16,
+        duration: 400
+      });
+
+      setStatus(item.display_name || 'Объект найден');
+    });
+
+    box.appendChild(b);
+  });
+}
+
+$('searchBtn').addEventListener('click', searchAddress);
+
+$('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchAddress();
+});
+
+function clearPlaceMarkers() {
+  placeMarkers.forEach(m => m.remove());
+  placeMarkers = [];
+  $('placesList').replaceChildren();
+}
+
+$('clearPlaces').addEventListener('click', () => {
+  clearPlaceMarkers();
+  setStatus('Метки объектов удалены.');
+});
+
+$('parksBtn').addEventListener('click', findGreenSpaces);
+
+async function findGreenSpaces() {
+  if (!map) return;
+
+  if (placesController) placesController.abort();
+
+  placesController = new AbortController();
+  $('parksBtn').disabled = true;
+  setStatus('Ищем парки, сады и леса в текущем районе…');
+  clearPlaceMarkers();
+
+  try {
+    const b = map.getBounds();
+    const south = b.getSouth();
+    const west = b.getWest();
+    const north = b.getNorth();
+    const east = b.getEast();
+
+    const query =
+      '[out:json][timeout:18];(' +
+      'nwr[leisure~"^(park|garden|nature_reserve|recreation_ground)$"](' +
+      south + ',' + west + ',' + north + ',' + east + ');' +
+      'nwr[landuse~"^(forest|grass|meadow|village_green)$"](' +
+      south + ',' + west + ',' + north + ',' + east + ');' +
+      'nwr[natural~"^(wood|scrub)$"](' +
+      south + ',' + west + ',' + north + ',' + east + ');' +
+      'nwr[boundary="protected_area"](' +
+      south + ',' + west + ',' + north + ',' + east + ');' +
+      ');out center tags 100;';
+
+    const endpoints = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter'
+    ];
+
+    let data = null;
+    let lastErr = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        const r = await fetch(endpoint, {
+          method: 'POST',
+          body: query,
+          signal: placesController.signal,
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' }
+        });
+
+        if (!r.ok) throw new Error('Overpass ' + r.status);
+
+        data = await r.json();
+        break;
+
+      } catch (e) {
+        if (e.name === 'AbortError') throw e;
+        lastErr = e;
+      }
+    }
+
+    if (!data) throw lastErr || new Error('Сервер данных недоступен');
+
+    const seen = new Set();
+    const items = [];
+
+    for (const el of data.elements || []) {
+      const tags = el.tags || {};
+      const name =
+        tags.name ||
+        tags['name:ru'] ||
+        tags['name:en'] ||
+        tags['official_name'];
+
+      if (!name) continue;
+
+      const key = el.type + ':' + el.id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const center = el.center || (
+        el.lat != null ? { lat: el.lat, lon: el.lon } : null
+      );
+
+      if (!center) continue;
+
+      items.push({
+        name,
+        type: tags.leisure || tags.landuse || tags.natural ||
+              tags.boundary || 'зелёная зона',
+        lat: center.lat,
+        lon: center.lon,
+        tags
+      });
+    }
+
+    items.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+
+    const list = $('placesList');
+    list.replaceChildren();
+
+    items.forEach(item
+
+
+=> {
+      const marker = document.createElement('div');
+
+      marker.style.cssText =
+        'width:12px;height:12px;border-radius:50%;background:#4c875b;' +
+        'border:2px solid white;box-shadow:0 1px 4px #0005';
+
+      const m = new maplibregl.Marker({ element: marker })
+        .setLngLat([item.lon, item.lat])
+        .setPopup(
+          new maplibregl.Popup({ offset: 12 })
+            .setText(item.name + ' · ' + item.type)
+        )
+        .addTo(map);
+
+      placeMarkers.push(m);
+
+      const btn = document.createElement('button');
+      btn.className = 'feature-item';
+      btn.textContent = item.name + ' · ' + item.type;
+
+      btn.addEventListener('click', () => {
+        map.flyTo({
+          center: [item.lon, item.lat],
+          zoom: 16,
+          duration: 450
+        });
+
+        m.togglePopup();
+      });
+
+      list.appendChild(btn);
+    });
+
+    setStatus('Найдено именованных зелёных объектов: ' + items.length + '.');
+
+    if (!items.length) {
+      const p = document.createElement('p');
+      p.className = 'small';
+      p.textContent =
+        'В текущем охвате не найдено именованных объектов. ' +
+        'Попробуйте приблизить карту или проверить другой район.';
+      list.appendChild(p);
+    }
+
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      setStatus('Не удалось загрузить парки и леса: ' + e.message, true);
+    }
+  } finally {
+    $('parksBtn').disabled = false;
+  }
+}
+
+function runAnalysis() {
+  const f = selectedPolygon();
+
+  if (!f) {
+    $('analysisResult').textContent =
+      'Нарисуйте полигон участка и выберите его.';
+    return;
+  }
+
+  try {
+    const area = window.turf ? turf.area(f) : 0;
+    const bounds = turf.bbox(f);
+
+    const rendered = map.queryRenderedFeatures({
+      layers: map.getStyle().layers
+        .map(l => l.id)
+        .filter(id => map.getLayer(id) && id !== 'gorod-3d')
+    });
+
+    const unique = new Map();
+
+    rendered.forEach(ft => {
+      const k =
+        (ft.source || '') + '|' +
+        (ft.sourceLayer || '') + '|' +
+        (ft.id ?? JSON.stringify(ft.geometry?.coordinates || []).slice(0, 80));
+
+      if (!unique.has(k)) unique.set(k, ft);
+    });
+
+    const feats = [...unique.values()];
+
+    let buildings = 0;
+    let roads = 0;
+    let green = 0;
+
+    for (const ft of feats) {
+      const c = category({
+        id: ft.layer?.id || '',
+        'source-layer': ft.sourceLayer || ft.layer?.['source-layer'] || ''
+      });
+
+      if (c === 'buildings') buildings++;
+      if (c === 'roads') roads++;
+      if (c === 'green') green++;
+    }
+
+    const lines = [];
+
+    lines.push('<b>Предварительная сводка по участку</b>');
+    lines.push(
+      'Площадь: ' + formatArea(area) +
+      ' (' + (area / 10000).toFixed(2) + ' га)'
+    );
+
+    lines.push(
+      'Габариты охвата: ' +
+      (Math.abs(bounds[2] - bounds[0]) * 111).toFixed(2) +
+      ' × ' +
+      (Math.abs(bounds[3] - bounds[1]) * 111).toFixed(2) +
+      ' км (приблизительно)'
+    );
+
+    if ($('analysisBuildings').checked) {
+      lines.push('Зданий в текущем отображении: ' + buildings);
+    }
+
+    if ($('analysisRoads').checked) {
+      lines.push('Дорожных объектов в отображении: ' + roads);
+    }
+
+    if ($('analysisGreen').checked) {
+      lines.push('Зелёных/землепользовательских объектов в отображении: ' + green);
+    }
+
+    lines.push(
+      '<span style="color:#69736b">' +
+      'Счётчики относятся к загруженным видимым тайлам вокруг карты, ' +
+      'а не к точному пересечению с границей полигона. ' +
+      'Для корректных площадных долей нужен GIS-слой с полной геометрией.' +
+      '</span>'
+    );
+
+    $('analysisResult').innerHTML = lines.join('
+');
+    setStatus('Предварительный анализ рассчитан.');
+
+  } catch (e) {
+    $('analysisResult').textContent = 'Ошибка анализа: ' + e.message;
+    setStatus('Ошибка анализа.', true);
+  }
+}
+
+$('runAnalysis').addEventListener('click', runAnalysis);
+
+function projectData() {
+  return {
+    format: 'gorod-ru-planning-project',
+    version: 2,
+    nam
+
+
+e: safeName($('projectName').value),
+    city: activeCity,
+
+    camera: map ? {
+      center: map.getCenter().toArray(),
+      zoom: map.getZoom(),
+      pitch: map.getPitch(),
+      bearing: map.getBearing()
+    } : null,
+
+    layers: {
+      roads: $('roads').checked,
+      buildings: $('buildings').checked,
+      green: $('green').checked,
+      water: $('water').checked,
+      labels: $('labels').checked,
+      threeD: $('threeD').checked
+    },
+
+    drawing: getAllDrawn(),
+    buffer: analysisBuffer,
+
+    style: {
+      maskColor: $('maskColor').value,
+      maskOpacity: +$('maskOpacity').value,
+      maskName: $('maskName').value
+    },
+
+    savedAt: new Date().toISOString()
+  };
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = name;
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+$('saveProject').addEventListener('click', () => {
+  try {
+    const d = projectData();
+
+    localStorage.setItem(
+      'gorodru-project-' + slug(d.name),
+      JSON.stringify(d)
+    );
+
+    localStorage.setItem('gorodru-last-project', JSON.stringify(d));
+
+    setStatus('Проект сохранён в браузере.');
+
+  } catch (e) {
+    setStatus('Сохранение не удалось: ' + e.message, true);
+  }
+});
+
+$('exportProject').addEventListener('click', () => {
+  const d = projectData();
+
+  downloadBlob(
+    new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }),
+    slug(d.name) + '.json'
+  );
+});
+
+$('importProject').addEventListener('click', () => $('fileInput').click());
+
+$('fileInput').addEventListener('change', async e => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const d = JSON.parse(await file.text());
+
+    if (!['gorod-ru-planning-project', 'gorod-ru-project'].includes(d.format)) {
+      throw new Error('Неподдерживаемый формат проекта');
+    }
+
+    $('projectName').value = safeName(d.name);
+
+    if (d.layers) {
+      Object.entries(d.layers).forEach(([k, v]) => {
+        if ($(k)) $(k).checked = !!v;
+      });
+    }
+
+    if (d.style) {
+      $('maskColor').value = d.style.maskColor || '#e5a64b';
+      $('maskOpacity').value = d.style.maskOpacity || 35;
+      $('opacityValue').textContent = $('maskOpacity').value + '%';
+      $('maskName').value = d.style.maskName || '';
+    }
+
+    if (d.city && CITIES[d.city]) activeCity = d.city;
+
+    if (d.camera && map) {
+      map.jumpTo({
+        center: d.camera.center || CITIES[activeCity],
+        zoom: d.camera.zoom || 12,
+        pitch: d.camera.pitch || 0,
+        bearing: d.camera.bearing || 0
+      });
+    }
+
+    if (draw && d.drawing) {
+      draw.deleteAll();
+      (d.drawing.features || []).forEach(f => {
+        try { draw.add(f); } catch (_) {}
+      });
+    }
+
+    if (d.buffer && map?.getSource('analysis-buffer')) {
+      map.getSource('analysis-buffer').setData(d.buffer);
+    }
+
+    applyLayerVisibility();
+    refreshStats();
+    setStatus('Проект загружен: ' + safeName(d.name));
+
+  } catch (err) {
+    setStatus('Ошибка открытия проекта: ' + err.message, true);
+  } finally {
+    e.target.value = '';
+  }
+});
+
+$('exportGeo').addEventListener('click', () => {
+  const d = getAllDrawn();
+  d.name = safeName($('projectName').value);
+
+  downloadBlob(
+    new Blob([JSON.stringify(d, null, 2)], { type: 'application/geo+json' }),
+    slug(d.name) + '-masks.geojson'
+  );
+
+  setStatus('Маски и рисунки экспортированы в GeoJSON.');
+});
+
+$('exportPng').addEventListener('click', () => {
+  if (!mapReady) {
+    setStatus('Карта ещё не готова.', true);
+    return;
+  }
+
+  try {
+    const a = document.createElement('a');
+    a.href = map.getCanvas().toDataURL('image/png');
+    a.download = slug($('projectName').value) + '.png';
+    a.click();
+
+    setStatus('Экспорт PNG запущен.');
+
+  } catch (e) {
+    setStatus(
+      'PNG недоступен из-за ограничений CORS тайлового сервера. ' +
+      'Попробуйте снимок экрана или
+
+
+серверный экспорт.',
+      true
+    );
+  }
+});
+
+function buildAIPrompt() {
+  const d = projectData();
+  const f = selectedPolygon();
+
+  let area = 'не выделен';
+
+  if (f && window.turf) {
+    try {
+      area = (turf.area(f) / 10000).toFixed(2) + ' га';
+    } catch (_) {}
+  }
+
+  const q = $('aiQuestion').value.trim() ||
+    'Предложи структуру градостроительного анализа для этого участка.';
+
+  return 'Ты — помощник градостроителя и городского аналитика. ' +
+    'Помоги с предварительным анализом, укажи допущения и какие данные ' +
+    'необходимо проверить в официальных источниках. Не выдавай предположения ' +
+    'за нормативные выводы.\n\n' +
+    'Задача пользователя: ' + q + '\n\n' +
+    'Контекст проекта:\n' +
+    'Название: ' + d.name + '\n' +
+    'Город: ' + d.city + '\n' +
+    'Площадь выбранного полигона: ' + area + '\n' +
+    'Камера: ' + JSON.stringify(d.camera) + '\n' +
+    'Видимые слои: ' + JSON.stringify(d.layers) + '\n' +
+    'Количество нарисованных объектов: ' +
+    (d.drawing?.features?.length || 0) + '\n\n' +
+    'Сформируй практические рекомендации, перечень нужных данных, ' +
+    'методику анализа и ограничения результата.';
+}
+
+$('askAI').addEventListener('click', () => {
+  const prompt = buildAIPrompt();
+
+  try {
+    const url = 'https://chatgpt.com/?q=' + encodeURIComponent(prompt);
+    window.open(url, '_blank', 'noopener,noreferrer');
+
+    setStatus(
+      'Подготовлен запрос с контекстом проекта. ' +
+      'Если ChatGPT не открылся, нажмите «Скопировать запрос».'
+    );
+
+  } catch (e) {
+    setStatus('Не удалось открыть ChatGPT — скопируйте запрос вручную.', true);
+  }
+});
+
+$('copyAIPrompt').addEventListener('click', async () => {
+  const p = buildAIPrompt();
+
+  try {
+    await navigator.clipboard.writeText(p);
+    setStatus('Контекст проекта и вопрос скопированы.');
+
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = p;
+    document.body.appendChild(ta);
+    ta.select();
+
+    const ok = document.execCommand('copy');
+    ta.remove();
+
+    setStatus(
+      ok ? 'Запрос скопирован.' :
+      'Не удалось скопировать. Откройте приложение через HTTPS и попробуйте снова.',
+      !ok
+    );
+  }
+});
+
+$('newProject').addEventListener('click', () => {
+  if (!confirm('Создать новый проект? Несохранённые рисунки будут удалены.')) {
+    return;
+  }
+
+  if (draw) draw.deleteAll();
+
+  analysisBuffer = null;
+
+  if (map?.getSource('analysis-buffer')) {
+    map.getSource('analysis-buffer').setData({
+      type: 'FeatureCollection',
+      features: []
+    });
+  }
+
+  $('projectName').value = 'Градостроительный анализ';
+  $('maskName').value = '';
+
+  $('analysisResult').textContent =
+    'Нарисуйте полигон и нажмите «Анализ участка».';
+
+  ['roads', 'buildings', 'green', 'water', 'labels'].forEach(id => {
+    $(id).checked = true;
+  });
+
+  $('threeD').checked = false;
+
+  applyLayerVisibility();
+  goCity('Новосибирск');
+  setStatus('Создан новый проект.');
+});
+
+createMap();
+})();
+</script>
+</body>
+</html>
